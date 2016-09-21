@@ -12,7 +12,7 @@ void ldpc_encode_small(enum ldpc_code code,
 {
     int i, j, n, k, r, b, divb, modb;
     uint32_t const * g = ldpc_codes_get_compact_generator(code, &n, &k, &b);
-    if(g == NULL) {
+    if(g == NULL || code == LDPC_CODE_NONE) {
         return;
     }
 
@@ -82,7 +82,7 @@ void ldpc_encode_fast(enum ldpc_code code, const uint32_t* g,
 {
     int i, j, n, k, r, b;
     (void)ldpc_codes_get_compact_generator(code, &n, &k, &b);
-    if(g == NULL) {
+    if(g == NULL || code == LDPC_CODE_NONE) {
         return;
     }
 

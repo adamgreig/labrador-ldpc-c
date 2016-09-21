@@ -340,6 +340,9 @@ static const uint8_t phi_j_m_k[4][3][26] = {
 void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h)
 {
     switch(code) {
+        case LDPC_CODE_NONE:
+            return;
+
         case LDPC_CODE_N128_K64:
         case LDPC_CODE_N256_K128:
         case LDPC_CODE_N512_K256:
@@ -351,6 +354,9 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h)
         case LDPC_CODE_N2048_K1024:
             init_parity_tm(code, h);
             return;
+
+        default:
+            return;
     }
 }
 
@@ -361,6 +367,9 @@ static void init_parity_tc(enum ldpc_code code, uint32_t* h)
     ldpc_codes_get_params(code, &n, &k, NULL, &m, NULL, NULL);
 
     switch(code) {
+        case LDPC_CODE_NONE:
+            return;
+
         case LDPC_CODE_N128_K64:
             proto = h_n128_k64;
             break;
@@ -434,6 +443,9 @@ static void init_parity_tm(enum ldpc_code code, uint32_t* h)
     ldpc_codes_get_params(code, &n, &k, NULL, &m, NULL, NULL);
 
     switch(code) {
+        case LDPC_CODE_NONE:
+            return;
+
         case LDPC_CODE_N2048_K1024:
             init_parity_tm_sub(m, 0,   5, 5*m, (uint8_t const *)h_r12, h);
             break;
@@ -553,6 +565,10 @@ void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
     int i, j, n=0, k=0, m=0, p=0, c_idx=0, v_idx=0;
     ldpc_codes_get_params(code, &n, &k, &p, &m, NULL, NULL);
 
+    if(code == LDPC_CODE_NONE) {
+        return;
+    }
+
     /* Step through row-by-row (check to variable direction) */
     for(i=0; i<(n - k + p); i++) {
         cs[i] = c_idx;
@@ -590,6 +606,9 @@ void ldpc_codes_get_params(enum ldpc_code code,
     int nn=0, kk=0, pp=0, mm=0, bb=0, ss=0;
 
     switch(code) {
+        case LDPC_CODE_NONE:
+            return;
+
         case LDPC_CODE_N128_K64:
             nn = 128;
             kk = 64;
@@ -662,6 +681,9 @@ const uint32_t * ldpc_codes_get_compact_generator(enum ldpc_code code,
     ldpc_codes_get_params(code, n, k, NULL, NULL, b, NULL);
 
     switch(code) {
+        case LDPC_CODE_NONE:
+            return NULL;
+
         case LDPC_CODE_N128_K64:
             return g_n128_k64;
 
@@ -691,7 +713,7 @@ void ldpc_codes_init_generator(enum ldpc_code code, uint32_t* g)
     int i, j, l, n=0, k=0, b=0, r;
     uint32_t const * gc = ldpc_codes_get_compact_generator(code, &n, &k, &b);
 
-    if(gc == NULL) {
+    if(gc == NULL || code == LDPC_CODE_NONE) {
         return;
     }
 

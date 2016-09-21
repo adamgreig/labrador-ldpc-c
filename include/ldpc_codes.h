@@ -5,8 +5,10 @@
 /* Available LDPC codes.
  * n is the block length (bits transmitted over the air),
  * k is the data length (number of user bits encoded).
+ * LDPC_CODE_NONE causes functions to all no-op.
  */
 enum ldpc_code {
+    LDPC_CODE_NONE,
     LDPC_CODE_N128_K64,
     LDPC_CODE_N256_K128,
     LDPC_CODE_N512_K256,

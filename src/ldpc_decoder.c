@@ -23,6 +23,10 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
     uint8_t * codeword, * violations;
 
+    if(code == LDPC_CODE_NONE) {
+        return false;
+    }
+
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
 
     /* Split up the working area */
@@ -106,6 +110,10 @@ bool ldpc_decode_mp(enum ldpc_code code,
     float fabs_v_bj;
     float sgnprod;
     float minacc;
+
+    if(code == LDPC_CODE_NONE) {
+        return false;
+    }
 
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, &s);
 
@@ -270,8 +278,14 @@ void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
                              float* llrs, float ber)
 {
     int i, n=0;
+    float logber;
+
+    if(code == LDPC_CODE_NONE) {
+        return;
+    }
+
     ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
-    float logber = logf(ber);
+    logber = logf(ber);
     for(i=0; i<n; i++) {
         if((input[i/8] >> (7-(i%8))) & 1) {
             llrs[i] = logber;
