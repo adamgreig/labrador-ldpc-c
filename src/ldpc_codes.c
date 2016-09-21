@@ -360,6 +360,13 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h)
     }
 }
 
+size_t ldpc_codes_size_paritycheck(enum ldpc_code code)
+{
+    int n, k, p;
+    ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
+    return (n+p)*(n-k+p)/8;
+}
+
 static void init_parity_tc(enum ldpc_code code, uint32_t* h)
 {
     int u, v, i, j, n=0, k=0, m=0;
@@ -594,6 +601,24 @@ void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
     vs[j] = v_idx;
 }
 
+void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
+                                        size_t* ci_vi, size_t* cs, size_t* vs)
+{
+    int n, k, p, s;
+    ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, &s);
+    *ci_vi = sizeof(uint16_t) * s;
+    *cs = (n - k + p + 1) * sizeof(uint16_t);
+    *vs = (n + p + 1) * sizeof(uint16_t);
+}
+
+size_t ldpc_codes_size_total_h(enum ldpc_code code)
+{
+    size_t h, ci_vi, cs, vs;
+    h = ldpc_codes_size_paritycheck(code);
+    ldpc_codes_size_sparse_paritycheck(code, &ci_vi, &cs, &vs);
+    return h + 2*ci_vi + cs + vs;
+}
+
 /* n=code length, k=code dimension, m=sub-matrix size,
  * p=number of punctured parity checks
  */
@@ -778,4 +803,11 @@ void ldpc_codes_init_generator(enum ldpc_code code, uint32_t* g)
             }
         }
     }
+}
+
+size_t ldpc_codes_size_generator(enum ldpc_code code)
+{
+    int n, k;
+    ldpc_codes_get_params(code, &n, &k, NULL, NULL, NULL, NULL);
+    return k*(n-k)/8;
 }

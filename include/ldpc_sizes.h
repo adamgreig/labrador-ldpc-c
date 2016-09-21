@@ -101,12 +101,13 @@
 #define LDPC_SIZE_TX_FAST(CODE)     (LDPC_SIZE_G(CODE) + LDPC_SIZE_N(CODE) / 8)
 
 /* Add up the required size for each type of decoder, including the size
- * needed to store the resulting output.
+ * needed to store the input and resulting output.
  */
 #define LDPC_SIZE_RX_BF(CODE)       \
-    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_BF_WA(CODE) + LDPC_SIZE_K(CODE)/8)
+    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_BF_WA(CODE) + LDPC_SIZE_N(CODE)/8 + \
+     LDPC_SIZE_K(CODE)/8)
 #define LDPC_SIZE_RX_MP(CODE)       \
-    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_MP_LLRS(CODE) \
+    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_N(CODE)/8 + LDPC_SIZE_MP_LLRS(CODE) \
      + LDPC_SIZE_MP_WA(CODE) + LDPC_SIZE_MP_OUT(CODE))
 
 /* Find the size needed, parameterised over the encoder, decoder,

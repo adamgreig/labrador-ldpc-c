@@ -38,12 +38,18 @@ void ldpc_codes_get_params(enum ldpc_code code,
  *  (1280, 1024)    67584 bytes     16896 words     uint32_t[384][44]
  *  (1536, 1024)    172032 bytes    43008 words     uint32_t[768][56]
  *  (2048, 1024)    491520 bytes    122880 words    uint32_t[1536][80]
- * The byte sizes are statically available from LDPC_SIZE_H(CODE) in
- * ldpc_sizes.h.
  * Note the larger codes are punctured so the parity check matrix may be larger
  * than the usual (n-k, n) size.
  */
 void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h);
+
+/* Find the required size (in BYTES) for a given parity check matrix.
+ * This reflects the information in the comment for init_paritycheck.
+ * The same information is available statically via the LDPC_SIZE_H
+ * macro in ldpc_sizes.h.
+ * Returns (n+p)*(n-k+p)/8 for the given code.
+ */
+size_t ldpc_codes_size_paritycheck(enum ldpc_code code);
 
 /* Fill sparse representations of parity check matrix.
  * This representation has two 1d-lists, ci and vi, one representing the
@@ -70,9 +76,6 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h);
  * (1280, 1024)     4992         385        1409
  * (1536, 1024)     5888         769        1793
  * (2048, 1024)     7680        1537        2561
- * The byte sizes are statically available from LDPC_SIZE_CI_VI(CODE),
- * LDPC_SIZE_CS(CODE), LDPC_SIZE_VS(CODE) and LDPC_SIZE_SPARSE_H(CODE)
- * macros in ldpc_sizes.h.
  *
  * The non-sparse parity check matrix h must have been initialised before
  * calling this function, via ldpc_codes_init_paritycheck.
@@ -80,6 +83,23 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h);
 void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
                                         uint16_t* ci, uint16_t* cs,
                                         uint16_t* vi, uint16_t* vs);
+
+/* Find the sizes (in BYTES) for ci, cs, vi, and vs, as used in
+ * init_sparse_paritycheck. These sizes reflect the information in the comment.
+ * The same information is available statically via the LDPC_SIZE_CI_VI,
+ * LDPC_SIZE_CS, and LDPC_SIZE_VS macros in ldpc_sizes.h.
+ * Returns sizeof(uint16_t) * (s, n-k+p+1, n+p+1) for the given code.
+ */
+void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
+                                        size_t* ci_vi, size_t* cs, size_t* vs);
+
+/* Find the total size (in BYTES) required to store the parity check and its
+ * sparse representation.
+ * Equal to size_paritycheck + 2*size_ci_vi) + size_cs + size_vs.
+ * The same information is available statically via the LDPC_SIZE_SPARSE_H
+ * macro in ldpc_sizes.h.
+ */
+size_t ldpc_codes_size_total_h(enum ldpc_code code);
 
 /* Gets a pointer to the relevant constants for compact generator matrices.
  * Also sets n and k (code size) and b (circulant block size).
@@ -103,9 +123,15 @@ const uint32_t * ldpc_codes_get_compact_generator(enum ldpc_code code,
  *  (1280, 1024)    32768 bytes     8192 words      uint32_t[1024][8]
  *  (1536, 1024)    65536 bytes     16384 words     uint32_t[1024][16]
  *  (2048, 1024)    131072 bytes    32768 words     uint32_t[1024][32]
- * The byte sizes are statically available from the LDPC_SIZE_G(CODE) macro
- * in ldpc_sizes.h
  */
 void ldpc_codes_init_generator(enum ldpc_code code, uint32_t* g);
+
+/* Find the size (in BYTES) required for the generator matrix g.
+ * This is the same as the information in the comment for init_generator,
+ * and is equal to k*(n-k)/8.
+ * The same information is available statically from the LDPC_SIZE_G macro
+ * in ldpc_sizes.h.
+ */
+size_t ldpc_codes_size_generator(enum ldpc_code code);
 
 #endif

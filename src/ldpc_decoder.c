@@ -88,6 +88,13 @@ bool ldpc_decode_bf(enum ldpc_code code,
     return false;
 }
 
+size_t ldpc_decode_size_bf_wa(enum ldpc_code code)
+{
+    int n;
+    ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
+    return (9*n)/8;
+}
+
 bool ldpc_decode_mp(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs,
                     uint16_t* vi, uint16_t* vs,
@@ -274,6 +281,20 @@ bool ldpc_decode_mp(enum ldpc_code code,
     return false;
 }
 
+size_t ldpc_decode_size_mp_wa(enum ldpc_code code)
+{
+    int s;
+    ldpc_codes_get_params(code, NULL, NULL, NULL, NULL, NULL, &s);
+    return 2*s*sizeof(float);
+}
+
+size_t ldpc_decode_size_mp_out(enum ldpc_code code)
+{
+    int n, p;
+    ldpc_codes_get_params(code, &n, NULL, &p, NULL, NULL, NULL);
+    return (n+p)/8;
+}
+
 void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
                              float* llrs, float ber)
 {
@@ -299,4 +320,11 @@ void ldpc_decode_hard_llrs(enum ldpc_code code, const uint8_t* input,
                            float* llrs)
 {
     ldpc_decode_ber_to_llrs(code, input, llrs, 0.05f);
+}
+
+size_t ldpc_decode_size_llrs(enum ldpc_code code)
+{
+    int n;
+    ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
+    return sizeof(float) * n;
 }

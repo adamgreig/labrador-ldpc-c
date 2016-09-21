@@ -20,9 +20,6 @@
  * (256, 128)       288
  * (512, 256)       576
  *
- * The byte sizes are statically available from LDPC_SIZE_BF_WA(CODE) in
- * ldpc_sizes.h.
- *
  * Calling this function uses around 50 bytes of stack.
  *
  * Returns true on decoding success, false otherwise.
@@ -36,6 +33,13 @@
 bool ldpc_decode_bf(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs,
                     const uint8_t* input, uint8_t* output, uint8_t* working);
+
+/* Find the size (in BYTES) required for the working area of the BF algorithm.
+ * This is the same as described in the associated comment, and is n/8 + n.
+ * The same information is available statically from the LDPC_SIZE_BF_WA macro
+ * in ldpc_sizes.h.
+ */
+size_t ldpc_decode_size_bf_wa(enum ldpc_code code);
 
 /* Decode LLRs into data using message passing algorithm.
  * This algorithm is slower and ideally requires soft information,
@@ -72,6 +76,20 @@ bool ldpc_decode_mp(enum ldpc_code code,
                     uint16_t* vi, uint16_t* vs,
                     const float* llrs, uint8_t* output, float* working);
 
+/* Find the size (in BYTES) required for the working area of the MP algorithm.
+ * This is the same as described in the associated comment, and is
+ * 2*s*sizeof(float). The same information is available statically from the
+ * LDPC_SIZE_MP_WA macro in ldpc_sizes.h.
+ */
+size_t ldpc_decode_size_mp_wa(enum ldpc_code code);
+
+/* Find the size (in BYTES) required for the output of the MP algorithm.
+ * This is the same as described in the associated comment, and is
+ * (n+p)/8. The same information is available statically from the
+ * LDPC_SIZE_MP_OUT macro in ldpc_sizes.h.
+ */
+size_t ldpc_decode_size_mp_out(enum ldpc_code code);
+
 /* Create approximate LLRs using just the channel BER and the received data.
  * Can be used to feed the message passing algorithm soft-ish information.
  * input must be n/8 bytes long, llrs must be n floats long.
@@ -84,5 +102,12 @@ void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
  */
 void ldpc_decode_hard_llrs(enum ldpc_code code, const uint8_t* input,
                            float* llrs);
+
+/* Find the size (in BYTES) required to store the LLRs for the given code.
+ * This is sizeof(float)*n.
+ * The same information is available statically from the LDPC_SIZE_LLRS macro
+ * in ldpc_sizes.h.
+ */
+size_t ldpc_decode_size_llrs(enum ldpc_code code);
 
 #endif
