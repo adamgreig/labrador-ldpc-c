@@ -29,15 +29,18 @@ enum ldpc_code {
 void ldpc_codes_get_params(enum ldpc_code code,
                            int* n, int* k, int* p, int* m, int* b, int* s);
 
-/* Fill h with the appropriate parity check matrix, densely packed.
- * Required size of h:
+/* Fill h with the appropriate parity check matrix,
+ * densely packed (32 columns per word).
+ * Required size of h is (n+p)*(n-k+p)/8 bytes:
  *  (128, 64)       1024 bytes      256 words       uint32_t[64][4]
  *  (256, 128)      4096 bytes      1024 words      uint32_t[128][8]
  *  (512, 256)      16384 bytes     4096 words      uint32_t[256][16]
  *  (1280, 1024)    67584 bytes     16896 words     uint32_t[384][44]
  *  (1536, 1024)    172032 bytes    43008 words     uint32_t[768][56]
  *  (2048, 1024)    491520 bytes    122880 words    uint32_t[1536][80]
- * Note the larger codes are punctured so the parity check matrix is larger
+ * The byte sizes are statically available from LDPC_SIZE_H(CODE) in
+ * ldpc_sizes.h.
+ * Note the larger codes are punctured so the parity check matrix may be larger
  * than the usual (n-k, n) size.
  */
 void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h);
@@ -67,6 +70,9 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h);
  * (1280, 1024)     4992         385        1409
  * (1536, 1024)     5888         769        1793
  * (2048, 1024)     7680        1537        2561
+ * The byte sizes are statically available from LDPC_SIZE_CI_VI(CODE),
+ * LDPC_SIZE_CS(CODE), LDPC_SIZE_VS(CODE) and LDPC_SIZE_SPARSE_H(CODE)
+ * macros in ldpc_sizes.h.
  *
  * The non-sparse parity check matrix h must have been initialised before
  * calling this function, via ldpc_codes_init_paritycheck.
@@ -90,13 +96,15 @@ const uint32_t * ldpc_codes_get_compact_generator(enum ldpc_code code,
  * Note this will only initialise the parity part of G, and not the identity
  * matrix, since all supported codes are systematic. This matches what's
  * expected by the non-compact encoder.
- * Required size of g:
+ * Required size of g is k*(n-k)/8 bytes:
  *  (128, 64)       512 bytes       128 words       uint32_t[64][2]
  *  (256, 128)      2048 bytes      512 words       uint32_t[128][4]
  *  (512, 256)      8192 bytes      2048 words      uint32_t[256][8]
  *  (1280, 1024)    32768 bytes     8192 words      uint32_t[1024][8]
  *  (1536, 1024)    65536 bytes     16384 words     uint32_t[1024][16]
  *  (2048, 1024)    131072 bytes    32768 words     uint32_t[1024][32]
+ * The byte sizes are statically available from the LDPC_SIZE_G(CODE) macro
+ * in ldpc_sizes.h
  */
 void ldpc_codes_init_generator(enum ldpc_code code, uint32_t* g);
 

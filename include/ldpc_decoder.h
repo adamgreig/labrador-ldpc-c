@@ -20,6 +20,9 @@
  * (256, 128)       288
  * (512, 256)       576
  *
+ * The byte sizes are statically available from LDPC_SIZE_BF_WA(CODE) in
+ * ldpc_sizes.h.
+ *
  * Calling this function uses around 50 bytes of stack.
  *
  * Returns true on decoding success, false otherwise.
@@ -56,6 +59,9 @@ bool ldpc_decode_bf(enum ldpc_code code,
  * (1280, 1024)     176                     9984
  * (1536, 1024)     224                     11776
  * (2048, 1024)     320                     15360
+ *
+ * The byte sizes are statically available from LDPC_SIZE_MP_WA(CODE) and
+ * LDPC_SIZE_MP_OUT(CODE) macros in ldpc_sizes.h.
  *
  * Calling this function uses around 100 bytes of stack.
  *
