@@ -362,7 +362,7 @@ void ldpc_codes_init_paritycheck(enum ldpc_code code, uint32_t* h)
 
 size_t ldpc_codes_size_paritycheck(enum ldpc_code code)
 {
-    int n, k, p;
+    int n=0, k=0, p=0;
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
     return (n+p)*(n-k+p)/8;
 }
@@ -604,7 +604,7 @@ void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
 void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
                                         size_t* ci_vi, size_t* cs, size_t* vs)
 {
-    int n, k, p, s;
+    int n=0, k=0, p=0, s=0;
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, &s);
     *ci_vi = sizeof(uint16_t) * s;
     *cs = (n - k + p + 1) * sizeof(uint16_t);
@@ -613,7 +613,7 @@ void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
 
 size_t ldpc_codes_size_total_h(enum ldpc_code code)
 {
-    size_t h, ci_vi, cs, vs;
+    size_t h=0, ci_vi=0, cs=0, vs=0;
     h = ldpc_codes_size_paritycheck(code);
     ldpc_codes_size_sparse_paritycheck(code, &ci_vi, &cs, &vs);
     return h + 2*ci_vi + cs + vs;
@@ -807,7 +807,7 @@ void ldpc_codes_init_generator(enum ldpc_code code, uint32_t* g)
 
 size_t ldpc_codes_size_generator(enum ldpc_code code)
 {
-    int n, k;
+    int n=0, k=0;
     ldpc_codes_get_params(code, &n, &k, NULL, NULL, NULL, NULL);
     return k*(n-k)/8;
 }

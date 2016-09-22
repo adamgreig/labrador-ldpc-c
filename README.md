@@ -96,7 +96,7 @@ Now transmit `txcode` out the radio.
 
 If you have hard information in `rxcode`:
 ```c
-ldpc_decode_hard_llrs(LDPC_CODE_K1280_N1024, rxcode, rxllrs);
+ldpc_decode_hard_to_llrs(LDPC_CODE_K1280_N1024, rxcode, rxllrs);
 ```
 
 Then, or if you already have soft information (more-positive means 

@@ -295,8 +295,8 @@ size_t ldpc_decode_size_mp_out(enum ldpc_code code)
     return (n+p)/8;
 }
 
-void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
-                             float* llrs, float ber)
+void ldpc_decode_hard_to_llrs_ber(enum ldpc_code code, const uint8_t* input,
+                                  float* llrs, float ber)
 {
     int i, n=0;
     float logber;
@@ -316,10 +316,26 @@ void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
     }
 }
 
-void ldpc_decode_hard_llrs(enum ldpc_code code, const uint8_t* input,
+void ldpc_decode_hard_to_llrs(enum ldpc_code code, const uint8_t* input,
                            float* llrs)
 {
-    ldpc_decode_ber_to_llrs(code, input, llrs, 0.05f);
+    ldpc_decode_hard_to_llrs_ber(code, input, llrs, 0.05f);
+}
+
+void ldpc_decode_llrs_to_hard(enum ldpc_code code, const float* llrs,
+                              uint8_t* output)
+{
+    int i, n=0;
+
+    if(code == LDPC_CODE_NONE) {
+        return;
+    }
+
+    ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
+
+    for(i=0; i<n; i++) {
+        output[i/8] |= (llrs[i] <= 0.0f) << (7 - (i%8));
+    }
 }
 
 size_t ldpc_decode_size_llrs(enum ldpc_code code)

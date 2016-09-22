@@ -44,9 +44,9 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code);
 /* Decode LLRs into data using message passing algorithm.
  * This algorithm is slower and ideally requires soft information,
  * but decodes very close to optimal. If you don't have soft information
- * but do have the channel BER, you can use ldpc_decode_ber_to_llrs to
+ * but do have the channel BER, you can use ldpc_decode_hard_to_llrs_ber to
  * go from hard information (bytes from a receiver) to soft information.
- * If you don't have that, you can use ldpc_decode_hard_llrs to generate
+ * If you don't have that, you can use ldpc_decode_hard_to_llrs to generate
  * arbitrary LLRs from the hard information.
  *
  * (ci, cs, vi, vs) must all have been initialised by
@@ -94,14 +94,20 @@ size_t ldpc_decode_size_mp_out(enum ldpc_code code);
  * Can be used to feed the message passing algorithm soft-ish information.
  * input must be n/8 bytes long, llrs must be n floats long.
  */
-void ldpc_decode_ber_to_llrs(enum ldpc_code code, const uint8_t* input,
-                             float* llrs, float ber);
+void ldpc_decode_hard_to_llrs_ber(enum ldpc_code code, const uint8_t* input,
+                                  float* llrs, float ber);
 
 /* Create hard LLRs from hard received data.
  * input must be n/8 bytes long, llrs must be n floats long.
  */
-void ldpc_decode_hard_llrs(enum ldpc_code code, const uint8_t* input,
-                           float* llrs);
+void ldpc_decode_hard_to_llrs(enum ldpc_code code, const uint8_t* input,
+                              float* llrs);
+
+/* Create hard information from received LLRs.
+ * llrs must be n floats long, output must be n/8 bytes long.
+ */
+void ldpc_decode_llrs_to_hard(enum ldpc_code code, const float* llrs,
+                              uint8_t* output);
 
 /* Find the size (in BYTES) required to store the LLRs for the given code.
  * This is sizeof(float)*n.
