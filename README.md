@@ -2,7 +2,9 @@
 
 This library handles [LDPC][1] encoding and decoding. It is designed to be 
 usable on embedded platforms as well as in phone, desktop, or server 
-applications.
+applications. It can be used completely outside of Labrador if you like, as it 
+doesn't depend on anything else in Labrador: this directory is a self-contained 
+library.
 
 Various LDPC codes of different lengths and rates are available. Functions are 
 available to encode and decode, both when RAM and CPU is abundant and (to some 
@@ -56,7 +58,7 @@ uint8_t rxcode[160];
 ```
 
 To store soft information for a decoder (needed even if you only have hard 
-information):
+information, if you want to use the soft decoders):
 ```c
 float rxllrs[1280];
 ```
