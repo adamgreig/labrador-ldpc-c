@@ -36,7 +36,9 @@ You'll need to provide the required memory for the various coding operations,
 it's left to you so you may do it statically or dynamically or however you 
 please. You can look up the required sizes in the comments by each function, or 
 use the `LDPC_SIZE_` macros in `ldpc_sizes.h` statically, or use the 
-`ldpc_*_size_*` functions defined elsewhere for information at runtime.
+`ldpc_*_size_*` functions defined elsewhere for information at runtime. Note 
+all the sizes are given in bytes, so you'll need to divide by the size of the 
+type.
 
 For this example we'll use the `LDPC_CODE_N1280_K1024` and statically allocate 
 all required memory.
@@ -76,9 +78,9 @@ float rxllrs[LDPC_SIZE_N(CODE)];
 
 Initialising the decoder:
 ```c
-uint16_t ci[LDPC_SIZE_CI(CODE)], cs[LDPC_SIZE_CS(CODE)];
-uint16_t vi[LDPC_SIZE_VI(CODE)], vs[LDPC_SIZE_VS(CODE)];
-float workingarea[LDPC_SIZE_MP_WA(CODE)];
+uint16_t ci[LDPC_SIZE_CI(CODE)/2], cs[LDPC_SIZE_CS(CODE)/2];
+uint16_t vi[LDPC_SIZE_VI(CODE)/2], vs[LDPC_SIZE_VS(CODE)/2];
+float workingarea[LDPC_SIZE_MP_WA(CODE)/4];
 
 ldpc_codes_init_sparse_paritycheck(CODE, ci, cs, vi, vs);
 ```

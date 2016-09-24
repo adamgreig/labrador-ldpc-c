@@ -77,10 +77,15 @@ size_t ldpc_codes_size_paritycheck(enum ldpc_code code);
  * (1536, 1024)     5888         769        1793
  * (2048, 1024)     7680        1537        2561
  *
+ * If you only want to use the bitflipping decoder, you can initialise only
+ * the row results, using ldpc_codes_init_sparse_paritycheck_rows.
+ *
  */
 void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code,
                                         uint16_t* ci, uint16_t* cs,
                                         uint16_t* vi, uint16_t* vs);
+void ldpc_codes_init_sparse_paritycheck_rows(enum ldpc_code code,
+                                             uint16_t* ci, uint16_t* cs);
 
 /* Find the sizes (in BYTES) for ci, cs, vi, and vs, as used in
  * init_sparse_paritycheck. These sizes reflect the information in the comment.
@@ -90,7 +95,8 @@ void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code,
  * Returns sizeof(uint16_t) * (s, n-k+p+1, n+p+1) for the given code.
  */
 void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
-                                        size_t* ci_vi, size_t* cs, size_t* vs);
+                                        size_t* ci, size_t* cs,
+                                        size_t* vi, size_t* vs);
 
 /* Gets a pointer to the relevant constants for compact generator matrices.
  * Also sets n and k (code size) and b (circulant block size).
