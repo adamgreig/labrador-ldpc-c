@@ -13,6 +13,15 @@ static void init_parity_tc(enum ldpc_code code, uint32_t* h);
 static void init_parity_tm(enum ldpc_code code, uint32_t* h);
 static void init_parity_tm_sub(int m, int col0, int dwidth, int hcols,
                                uint8_t const * design, uint32_t* h);
+static void init_sparse_parity_tc(enum ldpc_code code,
+                                  uint16_t* ci, uint16_t* cs,
+                                  uint16_t* vi, uint16_t* vs);
+static void init_sparse_parity_tm(enum ldpc_code code,
+                                  uint16_t* ci, uint16_t* cs,
+                                  uint16_t* vi, uint16_t* vs);
+static void init_sparse_parity_rows(enum ldpc_code code,
+                                    uint16_t* ci, uint16_t* cs,
+                                    uint16_t* vi, uint16_t* vs);
 
 /*
  * Generator matrix constants for the three CCSDS 231.1-O-1 codes,
@@ -68,7 +77,7 @@ static const uint8_t h_n128_k64[4][8] = {
 static const uint8_t h_n256_k128[4][8] = {
     {HS|31, HP|15, HP|25, HP| 0, HZ   , HP|20, HP|12, HI   },
     {HP|28, HS|30, HP|29, HP|24, HI   , HZ   , HP| 1, HP|20},
-    {HP| 8, HP| 0, HS|28, HI| 1, HP|29, HI   , HZ   , HP|21},
+    {HP| 8, HP| 0, HS|28, HP| 1, HP|29, HI   , HZ   , HP|21},
     {HP|18, HP|30, HP| 0, HS|30, HP|25, HP|26, HI   , HZ   },
 };
 
@@ -440,6 +449,70 @@ static void init_parity_tc(enum ldpc_code code, uint32_t* h)
     }
 }
 
+static void init_sparse_parity_tc(enum ldpc_code code,
+                                  uint16_t* ci, uint16_t* cs,
+                                  uint16_t* vi, uint16_t* vs)
+{
+    int col, row, col_block, row_block, block_row, block_col;
+    int vi_idx=0;
+    int n=0, k=0, m=0, s=0;
+    uint8_t subm, rot;
+    uint8_t const (* proto)[8];
+
+    ldpc_codes_get_params(code, &n, &k, NULL, &m, NULL, &s);
+
+    if(code == LDPC_CODE_N128_K64) {
+        proto = h_n128_k64;
+    } else if(code == LDPC_CODE_N256_K128) {
+        proto = h_n256_k128;
+    } else if(code == LDPC_CODE_N512_K256) {
+        proto = h_n512_k256;
+    } else {
+        return;
+    }
+
+    for(col=0; col<n; col++) {
+        /* col_block is the index of the sub-matrix for this column */
+        col_block = col / m;
+        /* block_col is the column inside this block */
+        block_col = col % m;
+
+        /* Record the start index of this column */
+        vs[col] = vi_idx;
+
+        for(row=0; row<n-k; row++) {
+            /* row_block is the index of the sub-matrix for this row */
+            row_block = row / m;
+            /* block_row is the row inside this block */
+            block_row = row % m;
+
+            /* Pick the entry from the prototype, and extract the rotation */
+            subm = proto[row_block][col_block];
+            rot = subm & 0x3F;
+
+            /* Identity matrix. Just check if j==i. */
+            if(subm & HI) {
+                if(block_col == block_row) {
+                    vi[vi_idx++] = row;
+                }
+            }
+
+            /* Rotated identity matrix. Check if j==(i+r)%m. */
+            if(subm & HP) {
+                if(block_col == (block_row + rot) % m) {
+                    vi[vi_idx++] = row;
+                }
+            }
+        }
+    }
+
+    /* Record the final entry. Note vs is one longer than n. */
+    vs[col] = vi_idx;
+
+    /* Now compute ci from vi */
+    init_sparse_parity_rows(code, ci, cs, vi, vs);
+}
+
 /*
  * Initialise a parity check matrix (h) to code (code).
  */
@@ -565,40 +638,189 @@ static void init_parity_tm_sub(int m, int col0, int dwidth, int hcols,
     }
 }
 
-void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
+void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code,
                                         uint16_t* ci, uint16_t* cs,
                                         uint16_t* vi, uint16_t* vs)
 {
-    int i, j, n=0, k=0, m=0, p=0, c_idx=0, v_idx=0;
-    ldpc_codes_get_params(code, &n, &k, &p, &m, NULL, NULL);
+    switch(code) {
+        case LDPC_CODE_NONE:
+            return;
 
-    if(code == LDPC_CODE_NONE) {
+        case LDPC_CODE_N128_K64:
+        case LDPC_CODE_N256_K128:
+        case LDPC_CODE_N512_K256:
+            init_sparse_parity_tc(code, ci, cs, vi, vs);
+            return;
+
+        case LDPC_CODE_N1280_K1024:
+        case LDPC_CODE_N1536_K1024:
+        case LDPC_CODE_N2048_K1024:
+            init_sparse_parity_tm(code, ci, cs, vi, vs);
+            return;
+
+        default:
+            return;
+    }
+}
+
+/* Generate the sparse representation directly from the defining constants. */
+void init_sparse_parity_tm(enum ldpc_code code,
+                           uint16_t* ci, uint16_t* cs,
+                           uint16_t* vi, uint16_t* vs)
+{
+    int col, row, col_block, row_block, block_part, block_row, block_col, pi_i;
+    int vi_idx=0;
+    int n=0, k=0, m=0, p=0, s=0, logm, kk;
+    int blocks_per_row, blocks_per_proto_row;
+    uint8_t pbit;
+    const uint8_t * proto;
+    ldpc_codes_get_params(code, &n, &k, &p, &m, NULL, &s);
+    blocks_per_row = (n+p)/m;
+
+    /* Look up log2(M) */
+    if(m == 128) {
+        logm = 7;
+    } else if(m == 256) {
+        logm = 8;
+    } else if(m == 512) {
+        logm = 9;
+    } else {
         return;
     }
 
-    /* Step through row-by-row (check to variable direction) */
-    for(i=0; i<(n - k + p); i++) {
-        cs[i] = c_idx;
-        for(j=0; j<(n + p); j++) {
-            uint8_t pbit = (h[i*(n+p)/32 + j/32] >> (31 - (j%32))) & 1;
-            if(pbit) {
-                ci[c_idx++] = j;
-            }
-        }
-    }
-    cs[i] = c_idx;
+    for(col=0; col<n+p; col++) {
+        /* col_block is the index of the sub-matrix for this column */
+        col_block = col / m;
+        /* block_col is the column inside this block */
+        block_col = col % m;
 
-    /* Now go column-by-column (variable to check direction) */
-    for(j=0; j<(n + p); j++) {
-        vs[j] = v_idx;
-        for(i=0; i<(n -k + p); i++) {
-            uint8_t pbit = (h[i*(n+p)/32 + j/32] >> (31 - (j%32))) & 1;
+        /* Record the start index of this column */
+        vs[col] = vi_idx;
+
+        /* Work out which of the prototypes we're using. */
+        if(blocks_per_row == 11) {
+            if(col_block < 4) {
+                proto = (uint8_t const *)h_r45;
+                blocks_per_proto_row = 4;
+            } else if(col_block < 6) {
+                proto = (uint8_t const *)h_r23;
+                blocks_per_proto_row = 2;
+                col_block -= 4;
+            } else if(col_block < 11) {
+                proto = (uint8_t const *)h_r12;
+                blocks_per_proto_row = 5;
+                col_block -= 6;
+            } else {
+                return;
+            }
+        } else if(blocks_per_row == 7) {
+            if(col_block < 2) {
+                proto = (uint8_t const *)h_r23;
+                blocks_per_proto_row = 2;
+            } else if(col_block < 7) {
+                proto = (uint8_t const *)h_r12;
+                blocks_per_proto_row = 5;
+                col_block -= 2;
+            } else {
+                return;
+            }
+        } else if(blocks_per_row == 5) {
+            if(col_block < 5) {
+                proto = (uint8_t const *)h_r12;
+                blocks_per_proto_row = 5;
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        for(row=0; row<n-k+p; row++) {
+            /* row_block is the index of the sub-matrix for this row */
+            row_block = row / m;
+            /* block_row is the row inside this block */
+            block_row = row % m;
+
+            /* Keep track of the current parity bit */
+            pbit = 0;
+
+            /* For each of the three parts of the block we sum up */
+            for(block_part=0; block_part<3; block_part++) {
+                /* Find the relevant block */
+                uint8_t hh = proto[block_part*blocks_per_proto_row*3 +
+                                   row_block*blocks_per_proto_row + col_block];
+
+                if(hh == 0) {
+                    /* 0 is easy */
+                    continue;
+                } else if(hh & HI) {
+                    /* Identities are simple:
+                     * Only set if block_row==block_col.
+                     */
+                    pbit ^= block_row == block_col;
+                } else if(hh & HP) {
+                    /* Permutation is the most complicated.
+                     * Need to compute pi_kk(block_row).
+                     * kk comes from the lower 5 bits of the prototype entry.
+                     */
+                    kk = hh & 0x3F;
+                    pi_i = m/4 * ((theta_k[kk-1] + ((4*block_row)/m)) % 4) +
+                           ((phi_j_m_k[(4*block_row)/m][logm-7][kk-1]
+                             + block_row) % (m/4));
+                    pbit ^= block_col == pi_i;
+                } else {
+                    /* Error. Must be either zero or have HI or HP bit set. */
+                    return;
+                }
+            }
+
+            /* If the parity bit ends up set, record this row for this col. */
             if(pbit) {
-                vi[v_idx++] = i;
+                vi[vi_idx++] = row;
             }
         }
     }
-    vs[j] = v_idx;
+
+    /* Record the final entry. Note vs is one longer than n+p. */
+    vs[col] = vi_idx;
+
+    /* Now compute ci from vi */
+    init_sparse_parity_rows(code, ci, cs, vi, vs);
+}
+
+static void init_sparse_parity_rows(enum ldpc_code code,
+                                    uint16_t* ci, uint16_t* cs,
+                                    uint16_t* vi, uint16_t* vs)
+{
+    int row, col, vi_idx=0, ci_idx=0;
+    int n, k, p, s;
+    ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, &s);
+
+
+    for(row=0; row<n-k+p; row++) {
+        /* Record the start index of this row. */
+        cs[row] = ci_idx;
+
+        /* We'll increment this to 0 the first go through the next loop. */
+        col = -1;
+
+        for(vi_idx=0; vi_idx<s; vi_idx++) {
+            /* Keep track of which column we're looking at. */
+            if(vi_idx == vs[col + 1]) {
+                col++;
+            }
+
+            /* If we see ourselves in this column's connections,
+             * then this column belongs in our connections.
+             */
+            if(vi[vi_idx] == row) {
+                ci[ci_idx++] = col;
+            }
+        }
+    }
+
+    /* Record the final row index. */
+    cs[row] = ci_idx;
 }
 
 void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
@@ -611,16 +833,9 @@ void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
     *vs = (n + p + 1) * sizeof(uint16_t);
 }
 
-size_t ldpc_codes_size_total_h(enum ldpc_code code)
-{
-    size_t h=0, ci_vi=0, cs=0, vs=0;
-    h = ldpc_codes_size_paritycheck(code);
-    ldpc_codes_size_sparse_paritycheck(code, &ci_vi, &cs, &vs);
-    return h + 2*ci_vi + cs + vs;
-}
-
 /* n=code length, k=code dimension, m=sub-matrix size,
- * p=number of punctured parity checks
+ * p=number of punctured parity checks, b=size of circulant block in g,
+ * s=number of bits set in h
  */
 void ldpc_codes_get_params(enum ldpc_code code,
                            int* n, int* k, int* p, int* m, int* b, int* s)

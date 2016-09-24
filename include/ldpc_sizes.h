@@ -53,6 +53,8 @@
 /* Sparse parity CI and VI size in bytes (= s uint16_t) */
 #define LDPC_SIZE_CI_VI(CODE)               \
     (sizeof(uint16_t) * LDPC_SIZE_S(CODE))
+#define LDPC_SIZE_CI(CODE) LDPC_SIZE_CI_VI(CODE)
+#define LDPC_SIZE_VI(CODE) LDPC_SIZE_CI_VI(CODE)
 
 /* Sparse parity CS size in bytes (= n - k + p + 1 uint16_t) */
 #define LDPC_SIZE_CS(CODE)                  \
@@ -66,11 +68,8 @@
 
 /* Sparse parity overall size in bytes */
 #define LDPC_SIZE_SPARSE_H(CODE)            \
-    (2*LDPC_SIZE_CI_VI(CODE) + LDPC_SIZE_CS(CODE) + LDPC_SIZE_VS(CODE))
-
-/* Parity total size in bytes, whole H + sparse representation */
-#define LDPC_SIZE_TOTAL_H(CODE)             \
-    (LDPC_SIZE_SPARSE_H(CODE) + LDPC_SIZE_H(CODE))
+    (LDPC_SIZE_CI(CODE) + LDPC_SIZE_CS(CODE)\
+     + LDPC_SIZE_VI(CODE) + LDPC_SIZE_VS(CODE))
 
 /* Expanded generator matrix sizes in bytes, for fast encoder.
  * There are k*(n-k)/8 parity bits (excluding systematic identity matrix).
@@ -104,10 +103,10 @@
  * needed to store the input and resulting output.
  */
 #define LDPC_SIZE_RX_BF(CODE)       \
-    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_BF_WA(CODE) + LDPC_SIZE_N(CODE)/8 + \
+    (LDPC_SIZE_SPARSE_H(CODE) + LDPC_SIZE_BF_WA(CODE) + LDPC_SIZE_N(CODE)/8 + \
      LDPC_SIZE_K(CODE)/8)
 #define LDPC_SIZE_RX_MP(CODE)       \
-    (LDPC_SIZE_TOTAL_H(CODE) + LDPC_SIZE_N(CODE)/8 + LDPC_SIZE_MP_LLRS(CODE) \
+    (LDPC_SIZE_SPARSE_H(CODE) + LDPC_SIZE_N(CODE)/8 + LDPC_SIZE_MP_LLRS(CODE) \
      + LDPC_SIZE_MP_WA(CODE) + LDPC_SIZE_MP_OUT(CODE))
 
 /* Find the size needed, parameterised over the encoder, decoder,

@@ -32,50 +32,60 @@ performance but take longer to transmit so increase latency and might be more
 susceptible to burst errors. The codes are chosen by the `ldpc_code` enum, for 
 example `LDPC_CODE_N1280_K1024` for a 128-byte (1024-bit) rate 4/5 code.
 
-For this example we'll use the `LDPC_CODE_N1280_K1024`, but you'll need to 
-change the memory sizes for whichever code you're using (all detailed in 
-`ldpc_codes.h`).
+You'll need to provide the required memory for the various coding operations, 
+it's left to you so you may do it statically or dynamically or however you 
+please. You can look up the required sizes in the comments by each function, or 
+use the `LDPC_SIZE_` macros in `ldpc_sizes.h` statically, or use the 
+`ldpc_*_size_*` functions defined elsewhere for information at runtime.
+
+For this example we'll use the `LDPC_CODE_N1280_K1024` and statically allocate 
+all required memory.
 
 #### Initialisation
 
+We'll stick the code of choice in a #define so we can easily refer to it 
+statically. This is especially useful for using the static size macros.
+```c
+#define CODE LDPC_CODE_N1280_K1024
+```
+
 To store the data-to-send and the codeword-to-transmit:
 ```c
-uint8_t txdata[128];
-uint8_t txcode[160];
+uint8_t txdata[LDPC_SIZE_K(CODE) / 8];
+uint8_t txcode[LDPC_SIZE_N(CODE) / 8];
 ```
 
 No further initialisation needed for the slower encoder. For quicker but more 
 RAM-using encoding:
 ```c
-uint32_t g[1024*8];
-ldpc_codes_init_generator(LDPC_CODE_N1280_K1024, g);
+uint32_t g[LDPC_SIZE_G(CODE)];
+ldpc_codes_init_generator(CODE, g);
 ```
 
 To store hard information for a decoder (only if you don't have soft 
 information):
 ```c
-uint8_t rxcode[160];
+uint8_t rxcode[LDPC_SIZE_N(CODE) / 8];
 ```
 
 To store soft information for a decoder (needed even if you only have hard 
 information, if you want to use the soft decoders):
 ```c
-float rxllrs[1280];
+float rxllrs[LDPC_SIZE_N(CODE)];
 ```
 
 Initialising the decoder:
 ```c
-uint32_t h[384*44];
-uint16_t ci[4992], vi[4992], cs[385], vs[1409];
-float workingarea[9984];
+uint16_t ci[LDPC_SIZE_CI(CODE)], cs[LDPC_SIZE_CS(CODE)];
+uint16_t vi[LDPC_SIZE_VI(CODE)], vs[LDPC_SIZE_VS(CODE)];
+float workingarea[LDPC_SIZE_MP_WA(CODE)];
 
-ldpc_codes_init_paritycheck(LDPC_CODE_N1280_K1024, h);
-ldpc_codes_init_sparse_paritycheck(LDPC_CODE_N1280_K1024, h, ci, cs, vi, vs);
+ldpc_codes_init_sparse_paritycheck(CODE, ci, cs, vi, vs);
 ```
 
 To store the decoded output:
 ```c
-uint8_t rxdata[176];
+uint8_t rxdata[LDPC_SIZE_MP_OUT(CODE)];
 ```
 
 #### Encoding
@@ -84,12 +94,12 @@ Write into `txdata`.
 
 Slow but low-memory encoding:
 ```c
-ldpc_encode_small(LDPC_CODE_N1280_K1024, txdata, txcode);
+ldpc_encode_small(CODE, txdata, txcode);
 ```
 
 Quick encoding:
 ```c
-ldpc_encode_fast(LDPC_CODE_N1280_K1024, g, txdata, txcode);
+ldpc_encode_fast(CODE, g, txdata, txcode);
 ```
 
 Now transmit `txcode` out the radio.
@@ -98,14 +108,13 @@ Now transmit `txcode` out the radio.
 
 If you have hard information in `rxcode`:
 ```c
-ldpc_decode_hard_to_llrs(LDPC_CODE_K1280_N1024, rxcode, rxllrs);
+ldpc_decode_hard_to_llrs(CODE, rxcode, rxllrs);
 ```
 
 Then, or if you already have soft information (more-positive means 
 more-likely-to-be-zero):
 ```c
-ldpc_decode_mp(LDPC_CODE_K1280_N1024, ci, cs, vi, vs,
-               rxllrs, rxdata, workingarea);
+ldpc_decode_mp(CODE, ci, cs, vi, vs, rxllrs, rxdata, workingarea);
 ```
 
 If it returns `true`, a codeword was found, which almost certainly means valid 

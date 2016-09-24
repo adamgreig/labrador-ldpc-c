@@ -134,6 +134,9 @@ bool ldpc_decode_mp(enum ldpc_code code,
     /* Initialise u(i->a) to 0 */
     memset(u, 0, sizeof(float) * s);
 
+    /* Initialise v(a->i) to 0 */
+    memset(v, 0, sizeof(float) * s);
+
     /* Run the message passing algorithm */
     for(iters=0; iters<max_iters; iters++) {
         /* Keep track of whether the overall parity is met.

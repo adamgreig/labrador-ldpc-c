@@ -67,7 +67,7 @@ size_t ldpc_codes_size_paritycheck(enum ldpc_code code);
  * one after the end of ci/vi.
  *
  * All of these must have been allocated before calling this function,
- * with the following lengths:
+ * with the following lengths (multiply by 2 for size in bytes).
  * Code             ci, vi        cs          vs
  * (n, k, p, s)        s     n-k+p+1       n+p+1
  * (128, 64)         512          65         129
@@ -77,29 +77,20 @@ size_t ldpc_codes_size_paritycheck(enum ldpc_code code);
  * (1536, 1024)     5888         769        1793
  * (2048, 1024)     7680        1537        2561
  *
- * The non-sparse parity check matrix h must have been initialised before
- * calling this function, via ldpc_codes_init_paritycheck.
  */
-void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code, uint32_t* h,
+void ldpc_codes_init_sparse_paritycheck(enum ldpc_code code,
                                         uint16_t* ci, uint16_t* cs,
                                         uint16_t* vi, uint16_t* vs);
 
 /* Find the sizes (in BYTES) for ci, cs, vi, and vs, as used in
  * init_sparse_paritycheck. These sizes reflect the information in the comment.
- * The same information is available statically via the LDPC_SIZE_CI_VI,
- * LDPC_SIZE_CS, and LDPC_SIZE_VS macros in ldpc_sizes.h.
+ * The same information is available statically via the LDPC_SIZE_CI,
+ * LDPC_SIZE_CS, LDPC_SIZE_VI, and LDPC_SIZE_VS macros in ldpc_sizes.h.
+ * For their sum, you can also use LDPC_SIZE_SPARSE_H.
  * Returns sizeof(uint16_t) * (s, n-k+p+1, n+p+1) for the given code.
  */
 void ldpc_codes_size_sparse_paritycheck(enum ldpc_code code,
                                         size_t* ci_vi, size_t* cs, size_t* vs);
-
-/* Find the total size (in BYTES) required to store the parity check and its
- * sparse representation.
- * Equal to size_paritycheck + 2*size_ci_vi) + size_cs + size_vs.
- * The same information is available statically via the LDPC_SIZE_SPARSE_H
- * macro in ldpc_sizes.h.
- */
-size_t ldpc_codes_size_total_h(enum ldpc_code code);
 
 /* Gets a pointer to the relevant constants for compact generator matrices.
  * Also sets n and k (code size) and b (circulant block size).
