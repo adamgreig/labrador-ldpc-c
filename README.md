@@ -218,9 +218,9 @@ The message passing decoder involves substantially more computation for each
 iteration and works by computing the probability of each bit given the other 
 bits connected to it via the parity check matrix. It can handle soft 
 information and as such is also suited for the punctured codes. The 
-implementation here uses min-sum with self-correction [paper][3] which is 
-reasonably efficient and performs almost as well as an "optimal" sum-product 
-decoding.
+implementation here uses min-sum with self-correction as per [this paper][3],
+which is reasonably efficient and performs almost as well as an "optimal" 
+sum-product decoding.
 
 [3]: https://arxiv.org/pdf/0803.1090.pdf
 
