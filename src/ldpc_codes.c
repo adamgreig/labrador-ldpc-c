@@ -793,7 +793,7 @@ static void init_sparse_parity_rows(enum ldpc_code code,
                                     uint16_t* vi, uint16_t* vs)
 {
     int row, col, vi_idx=0, ci_idx=0;
-    int n, k, p, s;
+    int n=0, k=0, p=0, s=0;
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, &s);
 
 

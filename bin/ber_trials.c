@@ -13,7 +13,6 @@
 
 const enum ldpc_code CODE = LDPC_CODE_N1280_K1024;
 uint32_t g[1024][8];
-uint32_t h[384][44];
 uint16_t ci[4992], vi[4992], cs[385], vs[1409];
 int n=0, k=0, p=0;
 
@@ -194,8 +193,7 @@ int main(int argc, char* argv[]) {
            n, k, p, max_trials);
 
     ldpc_codes_init_generator(CODE, (uint32_t*)g);
-    ldpc_codes_init_paritycheck(CODE, (uint32_t*)h);
-    ldpc_codes_init_sparse_paritycheck(CODE, (uint32_t*)h, ci, cs, vi, vs);
+    ldpc_codes_init_sparse_paritycheck(CODE, ci, cs, vi, vs);
 
     for(i=0; i<sizeof(ebn0_dbs)/sizeof(double); i++) {
         printf("# Running trial %lu of %lu: Eb/N0=%.1fdB\n",
