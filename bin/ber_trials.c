@@ -8,12 +8,14 @@
 #include "ldpc_codes.h"
 #include "ldpc_encoder.h"
 #include "ldpc_decoder.h"
+#include "ldpc_sizes.h"
 
 #define PI (3.14159265359)
 
-const enum ldpc_code CODE = LDPC_CODE_N1280_K1024;
-uint32_t g[1024][8];
-uint16_t ci[4992], vi[4992], cs[385], vs[1409];
+#define CODE LDPC_CODE_N1280_K1024
+uint32_t g[LDPC_LENGTH_G(CODE)];
+uint16_t ci[LDPC_LENGTH_CI(CODE)], vi[LDPC_LENGTH_VI(CODE)];
+uint16_t cs[LDPC_LENGTH_CS(CODE)], vs[LDPC_LENGTH_VS(CODE)];
 int n=0, k=0, p=0;
 
 /* Simple uniform to normal RNG */

@@ -90,9 +90,9 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
 size_t ldpc_decode_size_bf_wa(enum ldpc_code code)
 {
-    int n;
-    ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
-    return (9*n)/8;
+    int n, p;
+    ldpc_codes_get_params(code, &n, NULL, &p, NULL, NULL, NULL);
+    return (9*(n+p))/8;
 }
 
 bool ldpc_decode_mp(enum ldpc_code code,
@@ -335,6 +335,8 @@ void ldpc_decode_llrs_to_hard(enum ldpc_code code, const float* llrs,
     }
 
     ldpc_codes_get_params(code, &n, NULL, NULL, NULL, NULL, NULL);
+
+    memset(output, 0, n/8);
 
     for(i=0; i<n; i++) {
         output[i/8] |= (llrs[i] <= 0.0f) << (7 - (i%8));

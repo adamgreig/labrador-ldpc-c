@@ -13,7 +13,8 @@
  * ldpc_codes_init_sparse_paritycheck for the appropriate code.
  * input must be n/8 bytes long and each bit is a hard decision.
  * output must be k/8 bytes long and is written with the decoded data.
- * working must be n/8 + n bytes long and is used as a scratch working area:
+ * working must be (n+p)/8 + n + p bytes long and is used as a scratch
+ * working area:
  *
  * Code             Length of working area
  * (128, 64)        144
@@ -35,7 +36,8 @@ bool ldpc_decode_bf(enum ldpc_code code,
                     const uint8_t* input, uint8_t* output, uint8_t* working);
 
 /* Find the size (in BYTES) required for the working area of the BF algorithm.
- * This is the same as described in the associated comment, and is n/8 + n.
+ * This is the same as described in the associated comment,
+ * and is (n+p)/8 + n + p.
  * The same information is available statically from the LDPC_SIZE_BF_WA macro
  * in ldpc_sizes.h.
  */

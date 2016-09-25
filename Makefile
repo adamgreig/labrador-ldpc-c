@@ -14,3 +14,7 @@ ber_trials: lib
 
 throughput_trials: lib
 	gcc $(COPTS) -std=gnu99 -fopenmp -Iinclude/ bin/throughput_trials.c -Lbuild -llabradorldpc -lm -o build/throughput_trials
+
+test: lib
+	gcc $(COPTS) -std=gnu99 -fopenmp -Iinclude/ bin/test.c -Lbuild -llabradorldpc -lm -o build/test
+	./build/test

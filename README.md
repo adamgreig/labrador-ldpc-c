@@ -35,10 +35,8 @@ example `LDPC_CODE_N1280_K1024` for a 128-byte (1024-bit) rate 4/5 code.
 You'll need to provide the required memory for the various coding operations, 
 it's left to you so you may do it statically or dynamically or however you 
 please. You can look up the required sizes in the comments by each function, or 
-use the `LDPC_SIZE_` macros in `ldpc_sizes.h` statically, or use the 
-`ldpc_*_size_*` functions defined elsewhere for information at runtime. Note 
-all the sizes are given in bytes, so you'll need to divide by the size of the 
-type.
+use the `LDPC_SIZE_`/`LDPC_LENGTH_` macros in `ldpc_sizes.h` statically, or use 
+the `ldpc_*_size_*` functions defined elsewhere for information at runtime. 
 
 For this example we'll use the `LDPC_CODE_N1280_K1024` and statically allocate 
 all required memory.
@@ -53,41 +51,41 @@ statically. This is especially useful for using the static size macros.
 
 To store the data-to-send and the codeword-to-transmit:
 ```c
-uint8_t txdata[LDPC_SIZE_K(CODE) / 8];
-uint8_t txcode[LDPC_SIZE_N(CODE) / 8];
+uint8_t txdata[LDPC_PARAM_K(CODE) / 8];
+uint8_t txcode[LDPC_PARAM_N(CODE) / 8];
 ```
 
 No further initialisation needed for the slower encoder. For quicker but more 
 RAM-using encoding:
 ```c
-uint32_t g[LDPC_SIZE_G(CODE)];
+uint32_t g[LDPC_LENGTH_G(CODE)];
 ldpc_codes_init_generator(CODE, g);
 ```
 
 To store hard information for a decoder (only if you don't have soft 
 information):
 ```c
-uint8_t rxcode[LDPC_SIZE_N(CODE) / 8];
+uint8_t rxcode[LDPC_PARAM_N(CODE) / 8];
 ```
 
 To store soft information for a decoder (needed even if you only have hard 
 information, if you want to use the soft decoders):
 ```c
-float rxllrs[LDPC_SIZE_N(CODE)];
+float rxllrs[LDPC_PARAM_N(CODE)];
 ```
 
 Initialising the decoder:
 ```c
-uint16_t ci[LDPC_SIZE_CI(CODE)/2], cs[LDPC_SIZE_CS(CODE)/2];
-uint16_t vi[LDPC_SIZE_VI(CODE)/2], vs[LDPC_SIZE_VS(CODE)/2];
-float workingarea[LDPC_SIZE_MP_WA(CODE)/4];
+uint16_t ci[LDPC_LENGTH_CI(CODE)], cs[LDPC_LENGTH_CS(CODE)];
+uint16_t vi[LDPC_LENGTH_VI(CODE)], vs[LDPC_LENGTH_VS(CODE)];
+float workingarea[LDPC_LENGTH_MP_WA(CODE)];
 
 ldpc_codes_init_sparse_paritycheck(CODE, ci, cs, vi, vs);
 ```
 
 To store the decoded output:
 ```c
-uint8_t rxdata[LDPC_SIZE_MP_OUT(CODE)];
+uint8_t rxdata[LDPC_LENGTH_MP_OUT(CODE)];
 ```
 
 #### Encoding
