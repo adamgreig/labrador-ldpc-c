@@ -37,6 +37,8 @@ it's left to you so you may do it statically or dynamically or however you
 please. You can look up the required sizes in the comments by each function, or 
 use the `LDPC_SIZE_`/`LDPC_LENGTH_` macros in `ldpc_sizes.h` statically, or use 
 the `ldpc_*_size_*` functions defined elsewhere for information at runtime. 
+There is also a table below that gives the memory size required to use each 
+code in TX or RX with the different encoders and decoders.
 
 For this example we'll use the `LDPC_CODE_N1280_K1024` and statically allocate 
 all required memory.
@@ -156,6 +158,17 @@ It is straightforward to add support for the 4096-bit codes in the standard;
 they're only omitted to keep the code neater as no current use is foreseen. 
 Adding the 16384-bit codes is also possible but will take a little extra work 
 in improving the generator-matrix script.
+
+The amount of RAM required to operate with each code is as follows (in bytes):
+
+| Code        | TX Small | TX Fast  | RX BF    | RX MP    |
+|-------------|----------|----------|----------|----------|
+| ( 128,  64) |       16 |      528 |     1322 |     7076 |
+| ( 256, 128) |       32 |     2080 |     2642 |    14148 |
+| ( 512, 256) |       64 |     8256 |     5282 |    28292 |
+| (1280,1024) |      160 |    32928 |    12626 |    68948 |
+| (1536,1024) |      192 |    65728 |    15650 |    82340 |
+| (2048,1024) |      256 |   131328 |    21698 |   109124 |
 
 ## Encoding
 

@@ -16,5 +16,9 @@ throughput_trials: lib
 	gcc $(COPTS) -std=gnu99 -fopenmp -Iinclude/ bin/throughput_trials.c -Lbuild -llabradorldpc -lm -o build/throughput_trials
 
 test: lib
-	gcc $(COPTS) -std=gnu99 -fopenmp -Iinclude/ bin/test.c -Lbuild -llabradorldpc -lm -o build/test
+	gcc $(COPTS) -std=gnu99 -Iinclude/ bin/test.c -Lbuild -llabradorldpc -lm -o build/test
 	./build/test
+
+memory_table: lib
+	gcc $(COPTS) -Iinclude/ bin/memory_table.c -Lbuild -llabradorldpc -lm -o build/memory_table
+	./build/memory_table
