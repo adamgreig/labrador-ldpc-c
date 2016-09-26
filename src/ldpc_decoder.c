@@ -8,20 +8,141 @@
 #include <string.h>
 #include "ldpc_decoder.h"
 
-#include <stdio.h>
-
 static inline float sign(float x) {
     return (x>0.0f) - (x<0.0f);
 }
 
+/*
+ * Erasure decoding algorithm to pre-process punctured codes before using the
+ * bit flipping algorithm.
+ * Since bit flipping can't handle erasures, we instead try and decode them.
+ * The basic idea is:
+ *  * For each erased bit `a`:
+ *      * For each check `i` that `a` is associated with:
+ *          * If `a` is the only erasure that `i` is associated with,
+ *            then compute the parity of `i`, and cast a vote for the
+ *            value of `a` that would give even parity
+ *          * Otherwise ignore `i`
+ *      * If there is a majority vote, set `a` to the winning value,
+ *        and mark it no longer erased. Otherwise, leave it erased.
+ * This is based on the paper
+ * Novel multi-Gbps bit-flipping decoders for punctured LDPC codes,
+ * by Archonta, Kanistras and Paliouras, MOCAST 2016
+ *
+ * ci, cs, vi, and vs must all have been initialised appropriately.
+ * output must be (n+p)/8 long, with the first n/8 bytes already set to the
+ * received hard information, and the punctured bits in it will be updated.
+ * working must be (n+p) long. (we could use p/8 but since the bit flipping
+ *                              decoder needs n+p working area, we lose
+ *                              nothing and gain speed by using one byte
+ *                              per bit here).
+ */
+void ldpc_decode_erasures(enum ldpc_code code,
+                          uint16_t* ci, uint16_t* cs,
+                          uint16_t* vi, uint16_t* vs,
+                          uint8_t* output,
+                          uint8_t* working)
+{
+    int n, k, p, i, a, b, i_b, a_i, iters, bits_fixed=0;
+    uint8_t *erasures = working;
+    uint8_t parity;
+    int8_t votes;
+    bool only_one_erasure;
+    const int max_iters = 10;
+
+    /* Check vi and vs have actually been initialised. Easy mistake. */
+    if(vi == NULL || vs == NULL) {
+        return;
+    }
+
+    ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
+
+    /* Set all the punctured bits to be erased and have value 0 (arbitrary) */
+    memset(erasures, 0, n);
+    memset(erasures+n, 1, p);
+    memset(output + n/8, 0x00, p/8);
+
+    /* Run until either we run out of iterations or all bits get fixed. */
+    for(iters=0; iters<max_iters && bits_fixed<p; iters++) {
+        /* For each punctured bit */
+        for(a=n; a<n+p; a++) {
+            /* Skip bits that are no longer marked as erased */
+            if(!erasures[a]) {
+                continue;
+            }
+
+            /* Track votes for 0 (negative) or 1 (positive). */
+            votes = 0;
+
+            /* For each check this bit is associated with */
+            for(a_i=vs[a]; a_i<vs[a+1]; a_i++) {
+                i = vi[a_i];
+                parity = 0;
+
+                /* See what the check parity is, and quit without voting if
+                 * the parity check has another erasure already.
+                 */
+                only_one_erasure = true;
+                for(i_b=cs[i]; i_b<cs[i+1]; i_b++) {
+                    b = ci[i_b];
+
+                    /* Skip the punctured bit we're looking at */
+                    if(a == b) {
+                        continue;
+                    }
+
+                    /* If we see another erasure, stop */
+                    if(erasures[b]) {
+                        only_one_erasure = false;
+                        break;
+                    }
+
+                    /* Add up the parity for this check */
+                    parity += (output[b/8] >> (7-(b%8))) & 1;
+
+                }
+
+                /* Cast a vote if we only have one erasure.
+                 * If all the bits except this one add to odd parity,
+                 * we vote for this one to be 1 (to get even parity). And vv.
+                 */
+                if(only_one_erasure) {
+                    if((parity & 1) == 1) {
+                        votes++;
+                    } else {
+                        votes--;
+                    }
+                }
+            }
+
+            /* If we had a majority vote one way or the other, great!
+             * Set ourselves to the majority vote value and clear our erasure.
+             */
+            if(votes != 0) {
+                erasures[a] = 0;
+                bits_fixed++;
+
+                if(votes > 0) {
+                    output[a/8] |=  (1<<(7-(a%8)));
+                } else {
+                    output[a/8] &= ~(1<<(7-(a%8)));
+                }
+            }
+        }
+    }
+}
+
 bool ldpc_decode_bf(enum ldpc_code code,
-                    uint16_t* ci, uint16_t* cs,
+                    uint16_t* ci, uint16_t* cs, uint16_t* vi, uint16_t* vs,
                     const uint8_t* input, uint8_t* output, uint8_t* working)
 {
     int n, k, p, i, a, i_a, max_violations, iters;
     const int max_iters = 20;
 
-    uint8_t * codeword, * violations;
+    (void)vi; (void)vs;
+
+    /* Use working area to store parity-violation counts per bit */
+    uint8_t* violations = working;
 
     if(code == LDPC_CODE_NONE) {
         return false;
@@ -29,14 +150,13 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
     ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
 
-    /* Split up the working area */
-    codeword = working;
-    violations = working + (n + p)/8;
-
     /* Copy input to codeword space */
-    memcpy(codeword, input, n/8);
-    /* Set all the punctured bits to 0 */
-    memset(codeword + n/8, 0, p/8);
+    memcpy(output, input, n/8);
+
+    /* If the code is punctured, first try and fix erasures */
+    if(p > 0) {
+        ldpc_decode_erasures(code, ci, cs, vi, vs, output, working);
+    }
 
     /* Run the bit flipping algorithm */
     for(iters=0; iters<max_iters; iters++) {
@@ -50,7 +170,7 @@ bool ldpc_decode_bf(enum ldpc_code code,
             /* For each bit, update the parity sum */
             for(i_a=cs[i]; i_a<cs[i+1]; i_a++) {
                 a = ci[i_a];
-                parity += (codeword[a/8] >> (7-(a%8))) & 1;
+                parity += (output[a/8] >> (7-(a%8))) & 1;
             }
 
             /* If the check has odd parity, add one violation to each
@@ -72,19 +192,18 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
         if(max_violations == 0) {
             /* No violations means valid codeword */
-            memcpy(output, codeword, k/8);
             return true;
         } else {
             /* Otherwise flip all bits that had the maximum violations */
             for(a=0; a<(n+p); a++) {
                 if(violations[a] == max_violations) {
-                    codeword[a/8] ^= 1<<(7-(a%8));
+                    output[a/8] ^= 1<<(7-(a%8));
                 }
             }
         }
     }
 
-    /* If we didn't successfully decode in max_iters, fail here. */
+    /* If we didn't successfully decode after max_iters, fail here. */
     return false;
 }
 
@@ -92,7 +211,7 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code)
 {
     int n, p;
     ldpc_codes_get_params(code, &n, NULL, &p, NULL, NULL, NULL);
-    return (9*(n+p))/8;
+    return n+p;
 }
 
 bool ldpc_decode_mp(enum ldpc_code code,
@@ -291,7 +410,7 @@ size_t ldpc_decode_size_mp_wa(enum ldpc_code code)
     return 2*s*sizeof(float);
 }
 
-size_t ldpc_decode_size_mp_out(enum ldpc_code code)
+size_t ldpc_decode_size_out(enum ldpc_code code)
 {
     int n, p;
     ldpc_codes_get_params(code, &n, NULL, &p, NULL, NULL, NULL);

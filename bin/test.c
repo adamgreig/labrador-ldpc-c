@@ -235,25 +235,21 @@ bool test_code(enum ldpc_code code)
 
     /* Bit flip decoder. */
     printf("* Check bit-flipping decoder:                  ");
-    rxdata = malloc(ldpc_decode_size_mp_out(code));
+    rxdata = malloc(ldpc_decode_size_out(code));
     bf_wa = malloc(ldpc_decode_size_bf_wa(code));
-    if(k <= 256) {
-        ldpc_decode_bf(code, ci, cs, rxcode, rxdata, bf_wa);
-        ok = true;
-        for(i=0; i<k/8; i++) {
-            if(rxdata[i] != txdata[i]) {
-                ok = false;
-                break;
-            }
+    ldpc_decode_bf(code, ci, cs, vi, vs, rxcode, rxdata, bf_wa);
+    ok = true;
+    for(i=0; i<k/8; i++) {
+        if(rxdata[i] != txdata[i]) {
+            ok = false;
+            break;
         }
-        if(ok) {
-            printf(KGRN "OK" KNRM "\n");
-        } else {
-            printf(KRED "FAIL" KNRM "\n");
-            overall_ok = false;
-        }
+    }
+    if(ok) {
+        printf(KGRN "OK" KNRM "\n");
     } else {
-        printf(KYEL "SKIP" KNRM "\n");
+        printf(KRED "FAIL" KNRM "\n");
+        overall_ok = false;
     }
 
     /* Message passing decoder. */

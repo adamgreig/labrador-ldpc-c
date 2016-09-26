@@ -56,14 +56,14 @@ void run_trial(double ebn0, trial_result* result)
     double uncoded_sigma = sqrt(uncoded_eb / (2*ebn0));
 
     uint8_t txdata[n];
-    uint8_t txcode[n+k];
-    uint8_t rxdata[n+k+p];
-    uint8_t workingb[n/8 + n];
-    float workingf[9984];
-    float rxllrs_soft[n];
-    float rxllrs_hard[n];
-    float rxllrs_hard_ber[n];
-    uint8_t rxcode_hard[n+p];
+    uint8_t txcode[n];
+    uint8_t rxdata[n+p];
+    uint8_t workingb[ldpc_decode_size_bf_wa(CODE)];
+    float workingf[ldpc_decode_size_mp_wa(CODE)];
+    float rxllrs_soft[ldpc_decode_size_llrs(CODE)];
+    float rxllrs_hard[ldpc_decode_size_llrs(CODE)];
+    float rxllrs_hard_ber[ldpc_decode_size_llrs(CODE)];
+    uint8_t rxcode_hard[ldpc_decode_size_out(CODE)];
 
     /* Random TX message */
     for(i=0; i<k/8; i++) {
@@ -121,7 +121,7 @@ void run_trial(double ebn0, trial_result* result)
                                              rxllrs_hard, rxdata, workingf);
     result->hard_mp_ber = msg_ber(txdata, rxdata);
 
-    result->hard_bf_decoded = ldpc_decode_bf(CODE, ci, cs, rxcode_hard,
+    result->hard_bf_decoded = ldpc_decode_bf(CODE, ci, cs, vi, vs, rxcode_hard,
                                              rxdata, workingb);
     result->hard_bf_ber = msg_ber(txdata, rxdata);
 }

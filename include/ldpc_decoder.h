@@ -6,38 +6,44 @@
 
 /* Decode received input into output using bit flipping algorithm.
  * This algorithm is very quick, uses little memory, and only requires
- * hard information, but is much less capable at decoding than
- * the message passing algorithm.
+ * hard information, but is around 1dB less capable at decoding than
+ * the message passing algorithm with hard information.
  *
- * (ci, cs) must all have been initialised by
- * ldpc_codes_init_sparse_paritycheck for the appropriate code.
+ * (ci, cs, vi, vs) must all have been initialised by
+ * ldpc_codes_init_sparse_paritycheck for the appropriate code, except for the
+ * non-punctured codes (n=128, n=256, n=512), where vi and vs are unused and
+ * may be NULL.
+ *
  * input must be n/8 bytes long and each bit is a hard decision.
- * output must be k/8 bytes long and is written with the decoded data.
- * working must be (n+p)/8 + n + p bytes long and is used as a scratch
- * working area:
+ * output must be (n+p)/8 bytes long and is written with the decoded codeword,
+ * so the user data is present in the first k/8 bytes.
+ * working must be n + p bytes long and is used as a scratch working area:
  *
  * Code             Length of working area
- * (128, 64)        144
- * (256, 128)       288
- * (512, 256)       576
+ * (128, 64)        128
+ * (256, 128)       256
+ * (512, 256)       512
+ * (1280, 1024)     1408
+ * (1536, 1024)     1792
+ * (2048, 1024)     2560
  *
- * Calling this function uses around 50 bytes of stack.
+ * The required size of the output and the working area are available as
+ * LDPC_SIZE_BF_WA(CODE) and LDPC_SIZE_OUT(CODE), or from the
+ * ldpc_decode_size_bf_wa(code) and ldpc_decode_size_out(code) functions.
  *
- * Returns true on decoding success, false otherwise.
+ * Calling this function requires at least 100 bytes of stack.
  *
- * Note that this algorithm is not suitable to the longer codes which use
- * puncturing, as it cannot represent the unknown bits.
- * It's possible to write an erasure correcting step before the bit flipping
- * step, which should allow this code to work with puncturing, but that work
- * is not done yet.
+ * Returns true on decoding success, false otherwise. Even a failed decode
+ * may have corrected some of the bit errors, but the result is not a valid
+ * codeword.
  */
 bool ldpc_decode_bf(enum ldpc_code code,
-                    uint16_t* ci, uint16_t* cs,
+                    uint16_t* ci, uint16_t* cs, uint16_t* vi, uint16_t* vs,
                     const uint8_t* input, uint8_t* output, uint8_t* working);
 
 /* Find the size (in BYTES) required for the working area of the BF algorithm.
  * This is the same as described in the associated comment,
- * and is (n+p)/8 + n + p.
+ * and is n + p.
  * The same information is available statically from the LDPC_SIZE_BF_WA macro
  * in ldpc_sizes.h.
  */
@@ -67,9 +73,10 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code);
  * (2048, 1024)     320                     15360
  *
  * The byte sizes are statically available from LDPC_SIZE_MP_WA(CODE) and
- * LDPC_SIZE_MP_OUT(CODE) macros in ldpc_sizes.h.
+ * LDPC_SIZE_OUT(CODE) macros in ldpc_sizes.h, or from
+ * ldpc_decode_size_mp_wa(code) and ldpc_decode_size_out(code).
  *
- * Calling this function uses around 100 bytes of stack.
+ * Calling this function uses at least 100 bytes of stack.
  *
  * Returns true on decoding success, false otherwise.
  */
@@ -85,12 +92,12 @@ bool ldpc_decode_mp(enum ldpc_code code,
  */
 size_t ldpc_decode_size_mp_wa(enum ldpc_code code);
 
-/* Find the size (in BYTES) required for the output of the MP algorithm.
- * This is the same as described in the associated comment, and is
+/* Find the size (in BYTES) required for the output of the decoders.
+ * This is the same as described in the associated comments, and is
  * (n+p)/8. The same information is available statically from the
- * LDPC_SIZE_MP_OUT macro in ldpc_sizes.h.
+ * LDPC_SIZE_OUT macro in ldpc_sizes.h.
  */
-size_t ldpc_decode_size_mp_out(enum ldpc_code code);
+size_t ldpc_decode_size_out(enum ldpc_code code);
 
 /* Create approximate LLRs using just the channel BER and the received data.
  * Can be used to feed the message passing algorithm soft-ish information.

@@ -88,8 +88,7 @@
 /* Required working area for the bitflipping algorithm, in bytes.
  * (=(n+p)/8 + n + p)
  */
-#define LDPC_SIZE_BF_WA(CODE) (((LDPC_PARAM_N(CODE) + LDPC_PARAM_P(CODE)) \
-                               * 9) / 8)
+#define LDPC_SIZE_BF_WA(CODE) (LDPC_PARAM_N(CODE) + LDPC_PARAM_P(CODE))
 #define LDPC_LENGTH_BF_WA(CODE) LDPC_SIZE_BF_WA(CODE)
 
 /* MP decoder LLR length (in floats) and size (in bytes) */
@@ -101,8 +100,8 @@
 #define LDPC_SIZE_MP_WA(CODE)   (LDPC_LENGTH_MP_WA(CODE) * sizeof(float))
 
 /* Size of output for message passing decoder in bytes (=(n+p)/8) */
-#define LDPC_SIZE_MP_OUT(CODE) ((LDPC_PARAM_N(CODE) + LDPC_PARAM_P(CODE)) / 8)
-#define LDPC_LENGTH_MP_OUT(CODE) LDPC_SIZE_MP_OUT(CODE)
+#define LDPC_SIZE_OUT(CODE) ((LDPC_PARAM_N(CODE) + LDPC_PARAM_P(CODE)) / 8)
+#define LDPC_LENGTH_OUT(CODE) LDPC_SIZE_OUT(CODE)
 
 /* Add up the required size for each type of encoder, including the size
  * needed to store the resulting output.
@@ -115,15 +114,18 @@
  */
 #define LDPC_SIZE_RX_BF(CODE)    (  LDPC_SIZE_SPARSE_CI(CODE) \
                                   + LDPC_SIZE_SPARSE_CS(CODE) \
+                                  + ((LDPC_PARAM_P(CODE) > 0) \
+                                     * (  LDPC_SIZE_SPARSE_VI(CODE)   \
+                                        + LDPC_SIZE_SPARSE_VS(CODE))) \
                                   + LDPC_SIZE_BF_WA(CODE)     \
                                   + LDPC_PARAM_N(CODE)/8      \
-                                  + LDPC_PARAM_K(CODE)/8)
+                                  + LDPC_SIZE_OUT(CODE))
 
 #define LDPC_SIZE_RX_MP(CODE)    (  LDPC_SIZE_SPARSE_H(CODE) \
                                   + LDPC_SIZE_MP_LLRS(CODE)  \
                                   + LDPC_SIZE_MP_WA(CODE)    \
                                   + LDPC_PARAM_N(CODE)/8     \
-                                  + LDPC_SIZE_MP_OUT(CODE))
+                                  + LDPC_SIZE_OUT(CODE))
 
 /* Find the size needed, parameterised over the encoder, decoder,
  * TX code, and RX code, to store all the relevant expanded codes, working

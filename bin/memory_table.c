@@ -21,11 +21,8 @@ int main()
         LDPC_CODE_N2048_K1024
     };
 
-    size_t i, g, ci, cs, vi, vs, bf_wa, mp_wa, llrs, mp_out;
-    int n, k;
-
-    (void)ci; (void)cs; (void)vi; (void)vs; (void)bf_wa; (void)mp_wa;
-    (void)llrs; (void)mp_out;
+    size_t i, g, ci, cs, vi, vs, bf_wa, mp_wa, llrs, rx_out, sum;
+    int n, k, p;
 
     printf("\nRequired RAM size, in bytes:\n\n");
     printf("| Code        | TX Small | TX Fast  | RX BF    | RX MP    |\n");
@@ -36,7 +33,7 @@ int main()
         printf("| ");
 
         /* (n, k) */
-        ldpc_codes_get_params(code, &n, &k, NULL, NULL, NULL, NULL);
+        ldpc_codes_get_params(code, &n, &k, &p, NULL, NULL, NULL);
         printf("(%4d,%4d) |", n, k);
 
         /* TX Small */
@@ -49,13 +46,19 @@ int main()
         /* RX BF */
         ldpc_codes_size_sparse_paritycheck(code, &ci, &cs, &vi, &vs);
         bf_wa = ldpc_decode_size_bf_wa(code);
-        printf(" %8zu |", ci+cs+bf_wa+n/8+k/8);
+        rx_out = ldpc_decode_size_out(code);
+        sum = ci+cs+bf_wa+rx_out+n/8;
+        if(p > 0) {
+            sum += vi + vs;
+        }
+        printf(" %8zu |", sum);
 
         /* RX MP */
         llrs = ldpc_decode_size_llrs(code);
         mp_wa = ldpc_decode_size_mp_wa(code);
-        mp_out = ldpc_decode_size_mp_out(code);
-        printf(" %8zu |", ci+cs+vi+vs+llrs+mp_wa+mp_out+n/8);
+        rx_out = ldpc_decode_size_out(code);
+        sum = ci+cs+vi+vs+llrs+mp_wa+rx_out+n/8;
+        printf(" %8zu |", sum);
 
         printf("\n");
     }
