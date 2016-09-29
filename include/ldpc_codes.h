@@ -1,5 +1,6 @@
 #ifndef LDPC_CODES_H
 #define LDPC_CODES_H
+#include <stddef.h>
 #include <stdint.h>
 
 /* Available LDPC codes.

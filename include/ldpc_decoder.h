@@ -2,6 +2,7 @@
 #define LDPC_DECODER_H
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include "ldpc_codes.h"
 
 /* Decode received input into output using bit flipping algorithm.
