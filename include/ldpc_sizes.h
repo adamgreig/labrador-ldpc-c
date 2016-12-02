@@ -112,11 +112,11 @@
 /* Add up the required size for each type of decoder, including the size
  * needed to store the input and resulting output.
  */
-#define LDPC_SIZE_RX_BF(CODE)    (  LDPC_SIZE_SPARSE_CI(CODE) \
-                                  + LDPC_SIZE_SPARSE_CS(CODE) \
+#define LDPC_SIZE_RX_BF(CODE)    (  LDPC_SIZE_CI(CODE) \
+                                  + LDPC_SIZE_CS(CODE) \
                                   + ((LDPC_PARAM_P(CODE) > 0) \
-                                     * (  LDPC_SIZE_SPARSE_VI(CODE)   \
-                                        + LDPC_SIZE_SPARSE_VS(CODE))) \
+                                     * (  LDPC_SIZE_VI(CODE)   \
+                                        + LDPC_SIZE_VS(CODE))) \
                                   + LDPC_SIZE_BF_WA(CODE)     \
                                   + LDPC_PARAM_N(CODE)/8      \
                                   + LDPC_SIZE_OUT(CODE))
