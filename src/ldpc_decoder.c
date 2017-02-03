@@ -41,17 +41,18 @@ void ldpc_decode_erasures(enum ldpc_code code,
                           uint16_t* ci, uint16_t* cs,
                           uint16_t* vi, uint16_t* vs,
                           uint8_t* output,
-                          uint8_t* working)
+                          uint8_t* working,
+                          uint16_t* iters_run)
 {
     int n, k, p, i, a, b, i_b, a_i, iters, bits_fixed=0;
     uint8_t *erasures = working;
     uint8_t parity;
     int8_t votes;
     bool only_one_erasure;
-    const int max_iters = 10;
+    const int max_iters = 16;
 
-    /* Check vi and vs have actually been initialised. Easy mistake. */
-    if(vi == NULL || vs == NULL) {
+    /* Check ci, cs, vi, and vs have actually been initialised. */
+    if(ci == NULL || cs == NULL || vi == NULL || vs == NULL) {
         return;
     }
 
@@ -130,16 +131,19 @@ void ldpc_decode_erasures(enum ldpc_code code,
             }
         }
     }
+
+    *iters_run = iters;
 }
 
 bool ldpc_decode_bf(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs, uint16_t* vi, uint16_t* vs,
-                    const uint8_t* input, uint8_t* output, uint8_t* working)
+                    const uint8_t* input, uint8_t* output, uint8_t* working,
+                    uint16_t* iters_run)
 {
     int n, k, p, i, a, i_a, max_violations, iters;
     const int max_iters = 20;
 
-    (void)vi; (void)vs;
+    *iters_run = 0;
 
     /* Use working area to store parity-violation counts per bit */
     uint8_t* violations = working;
@@ -155,7 +159,7 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
     /* If the code is punctured, first try and fix erasures */
     if(p > 0) {
-        ldpc_decode_erasures(code, ci, cs, vi, vs, output, working);
+        ldpc_decode_erasures(code, ci, cs, vi, vs, output, working, iters_run);
     }
 
     /* Run the bit flipping algorithm */
@@ -192,6 +196,7 @@ bool ldpc_decode_bf(enum ldpc_code code,
 
         if(max_violations == 0) {
             /* No violations means valid codeword */
+            *iters_run += iters;
             return true;
         } else {
             /* Otherwise flip all bits that had the maximum violations */
@@ -204,6 +209,7 @@ bool ldpc_decode_bf(enum ldpc_code code,
     }
 
     /* If we didn't successfully decode after max_iters, fail here. */
+    *iters_run += iters;
     return false;
 }
 
@@ -217,7 +223,8 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code)
 bool ldpc_decode_mp(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs,
                     uint16_t* vi, uint16_t* vs,
-                    const float* llrs, uint8_t* output, float* working)
+                    const float* llrs, uint8_t* output, float* working,
+                    uint16_t* iters_run)
 {
     /* Code parameters */
     int n, k, p, s;
@@ -236,6 +243,8 @@ bool ldpc_decode_mp(enum ldpc_code code,
     float fabs_v_bj;
     float sgnprod;
     float minacc;
+
+    *iters_run = 0;
 
     if(code == LDPC_CODE_NONE) {
         return false;
@@ -395,11 +404,13 @@ bool ldpc_decode_mp(enum ldpc_code code,
 
         /* If every parity check was satisfied, we're done. */
         if(parity_ok) {
+            *iters_run = iters;
             return true;
         }
     }
 
     /* If we got here, we ran out of iterations :( */
+    *iters_run = iters;
     return false;
 }
 

@@ -32,6 +32,9 @@
  * LDPC_SIZE_BF_WA(CODE) and LDPC_SIZE_OUT(CODE), or from the
  * ldpc_decode_size_bf_wa(code) and ldpc_decode_size_out(code) functions.
  *
+ * iters_run is set to the number of iterations that ran. If the code used
+ * punctured bits, this will include runs of the erasure decoding routine.
+ *
  * Calling this function requires at least 100 bytes of stack.
  *
  * Returns true on decoding success, false otherwise. Even a failed decode
@@ -40,7 +43,8 @@
  */
 bool ldpc_decode_bf(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs, uint16_t* vi, uint16_t* vs,
-                    const uint8_t* input, uint8_t* output, uint8_t* working);
+                    const uint8_t* input, uint8_t* output, uint8_t* working,
+                    uint16_t* iters_run);
 
 /* Find the size (in BYTES) required for the working area of the BF algorithm.
  * This is the same as described in the associated comment,
@@ -77,6 +81,8 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code);
  * LDPC_SIZE_OUT(CODE) macros in ldpc_sizes.h, or from
  * ldpc_decode_size_mp_wa(code) and ldpc_decode_size_out(code).
  *
+ * iters_run is set to the number of iterations that ran.
+ *
  * Calling this function uses at least 100 bytes of stack.
  *
  * Returns true on decoding success, false otherwise.
@@ -84,7 +90,8 @@ size_t ldpc_decode_size_bf_wa(enum ldpc_code code);
 bool ldpc_decode_mp(enum ldpc_code code,
                     uint16_t* ci, uint16_t* cs,
                     uint16_t* vi, uint16_t* vs,
-                    const float* llrs, uint8_t* output, float* working);
+                    const float* llrs, uint8_t* output, float* working,
+                    uint16_t* iters_run);
 
 /* Find the size (in BYTES) required for the working area of the MP algorithm.
  * This is the same as described in the associated comment, and is

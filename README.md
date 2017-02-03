@@ -81,6 +81,7 @@ Initialising the decoder:
 uint16_t ci[LDPC_LENGTH_CI(CODE)], cs[LDPC_LENGTH_CS(CODE)];
 uint16_t vi[LDPC_LENGTH_VI(CODE)], vs[LDPC_LENGTH_VS(CODE)];
 float workingarea[LDPC_LENGTH_MP_WA(CODE)];
+uint16_t iters_run;
 
 ldpc_codes_init_sparse_paritycheck(CODE, ci, cs, vi, vs);
 ```
@@ -116,7 +117,7 @@ ldpc_decode_hard_to_llrs(CODE, rxcode, rxllrs);
 Then, or if you already have soft information (more-positive means 
 more-likely-to-be-zero):
 ```c
-ldpc_decode_mp(CODE, ci, cs, vi, vs, rxllrs, rxdata, workingarea);
+ldpc_decode_mp(CODE, ci, cs, vi, vs, rxllrs, rxdata, workingarea, &iters_run);
 ```
 
 If it returns `true`, a codeword was found, which almost certainly means valid 
