@@ -65,6 +65,8 @@ void run_trial(double ebn0, trial_result* result)
     float rxllrs_hard_ber[ldpc_decode_size_llrs(CODE)];
     uint8_t rxcode_hard[ldpc_decode_size_out(CODE)];
 
+    uint16_t iters_run;
+
     /* Random TX message */
     for(i=0; i<k/8; i++) {
         txdata[i] = rand() & 0xFF;
@@ -109,20 +111,20 @@ void run_trial(double ebn0, trial_result* result)
 
     /* Decoding attempts */
     result->soft_decoded = ldpc_decode_mp(CODE, ci, cs, vi, vs,
-                                          rxllrs_soft, rxdata, workingf);
+                                          rxllrs_soft, rxdata, workingf, &iters_run);
     result->soft_ber = msg_ber(txdata, rxdata);
 
     result->hard_ber_decoded = ldpc_decode_mp(CODE, ci, cs, vi, vs,
                                               rxllrs_hard_ber, rxdata,
-                                              workingf);
+                                              workingf, &iters_run);
     result->hard_ber_ber = msg_ber(txdata, rxdata);
 
     result->hard_mp_decoded = ldpc_decode_mp(CODE, ci, cs, vi, vs,
-                                             rxllrs_hard, rxdata, workingf);
+                                             rxllrs_hard, rxdata, workingf, &iters_run);
     result->hard_mp_ber = msg_ber(txdata, rxdata);
 
     result->hard_bf_decoded = ldpc_decode_bf(CODE, ci, cs, vi, vs, rxcode_hard,
-                                             rxdata, workingb);
+                                             rxdata, workingb, &iters_run);
     result->hard_bf_ber = msg_ber(txdata, rxdata);
 }
 

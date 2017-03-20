@@ -39,6 +39,8 @@ void run_trial(double ebn0, double* kbps)
     float workingf[9984];
     float rxllrs_soft[n];
 
+    uint16_t iters_run;
+
     struct timespec t_start, t_end;
     double time_taken;
 
@@ -65,7 +67,7 @@ void run_trial(double ebn0, double* kbps)
     }
 
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t_start);
-    ldpc_decode_mp(CODE, ci, cs, vi, vs, rxllrs_soft, rxdata, workingf);
+    ldpc_decode_mp(CODE, ci, cs, vi, vs, rxllrs_soft, rxdata, workingf, &iters_run);
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t_end);
 
     time_taken = (double)t_end.tv_sec + (double)t_end.tv_nsec * 1e-9 -
