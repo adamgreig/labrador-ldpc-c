@@ -103,6 +103,7 @@ bool test_code(enum ldpc_code code)
     uint8_t *rxdata, *bf_wa;
     float *rxllrs, *mp_wa;
     size_t size_bf_wa, size_mp_wa;
+    uint16_t iters_run;
 
     (void)rxdata; (void)bf_wa; (void)rxllrs; (void)mp_wa;
     (void)size_bf_wa; (void)size_mp_wa;
@@ -237,7 +238,7 @@ bool test_code(enum ldpc_code code)
     printf("* Check bit-flipping decoder:                  ");
     rxdata = malloc(ldpc_decode_size_out(code));
     bf_wa = malloc(ldpc_decode_size_bf_wa(code));
-    ldpc_decode_bf(code, ci, cs, vi, vs, rxcode, rxdata, bf_wa);
+    ldpc_decode_bf(code, ci, cs, vi, vs, rxcode, rxdata, bf_wa, &iters_run);
     ok = true;
     for(i=0; i<k/8; i++) {
         if(rxdata[i] != txdata[i]) {
@@ -255,7 +256,7 @@ bool test_code(enum ldpc_code code)
     /* Message passing decoder. */
     printf("* Check message-passing decoder:               ");
     mp_wa = malloc(ldpc_decode_size_mp_wa(code));
-    ldpc_decode_mp(code, ci, cs, vi, vs, rxllrs, rxdata, mp_wa);
+    ldpc_decode_mp(code, ci, cs, vi, vs, rxllrs, rxdata, mp_wa, &iters_run);
     ok = true;
     for(i=0; i<k/8; i++) {
         if(rxdata[i] != txdata[i]) {
