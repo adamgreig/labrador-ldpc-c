@@ -60,12 +60,12 @@ const uint32_t test_vector_txcode[] = {
  * Each is the CRC32 for {ci, cs, vi, vs}.
  */
 const uint32_t test_vector_sparse_h[][4] = {
-    [LDPC_CODE_N128_K64]    = {0xEFA94DF3, 0xAACD61F7, 0x2A434B32, 0xC2C357FD},
-    [LDPC_CODE_N256_K128]   = {0x16D7B220, 0x45C89470, 0x8C0B1BB5, 0xB52CD823},
-    [LDPC_CODE_N512_K256]   = {0xBF7FE8DE, 0x91ECF7A7, 0x9F3B08E5, 0xADF27DAC},
-    [LDPC_CODE_N1280_K1024] = {0x0E90A077, 0x513AA9FC, 0xC04FC69E, 0x3015B990},
-    [LDPC_CODE_N1536_K1024] = {0x79393640, 0x88868300, 0x5B47BD80, 0xC1270F59},
-    [LDPC_CODE_N2048_K1024] = {0xA9E48635, 0x07AB0B57, 0x551B70B1, 0x09153CF1},
+    [LDPC_CODE_N128_K64]    = {0xB7E800BD, 0x6C4C3709, 0xEACD656A, 0x41998815},
+    [LDPC_CODE_N256_K128]   = {0x90C64BFC, 0x9D4CF128, 0x8B4E54F1, 0x3A21F54D},
+    [LDPC_CODE_N512_K256]   = {0xE7135070, 0xA87336D5, 0x071B76FF, 0x80992086},
+    [LDPC_CODE_N1280_K1024] = {0x07699182, 0xF5386F36, 0x3951ACFF, 0x2C89D420},
+    [LDPC_CODE_N1536_K1024] = {0x6DFECCF6, 0xE3AC8063, 0xDC800AEB, 0xD737D4FD},
+    [LDPC_CODE_N2048_K1024] = {0x6805D4C6, 0x5F00D915, 0x4139AA3E, 0xE7FDABD1},
 };
 
 /* Simple CRC-32 implementation for comparing to test vectors. */
@@ -196,10 +196,10 @@ bool test_code(enum ldpc_code code)
     vi = malloc(size_vi);
     vs = malloc(size_vs);
     ldpc_codes_init_sparse_paritycheck(code, ci, cs, vi, vs);
-    if(   crc32((uint8_t*)ci, size_ci/2) == test_vector_sparse_h[code][0]
-       && crc32((uint8_t*)cs, size_cs/2) == test_vector_sparse_h[code][1]
-       && crc32((uint8_t*)vi, size_vi/2) == test_vector_sparse_h[code][2]
-       && crc32((uint8_t*)vs, size_vs/2) == test_vector_sparse_h[code][3])
+    if(   crc32((uint8_t*)ci, size_ci) == test_vector_sparse_h[code][0]
+       && crc32((uint8_t*)cs, size_cs) == test_vector_sparse_h[code][1]
+       && crc32((uint8_t*)vi, size_vi) == test_vector_sparse_h[code][2]
+       && crc32((uint8_t*)vs, size_vs) == test_vector_sparse_h[code][3])
     {
         printf(KGRN "OK" KNRM "\n");
     } else {
