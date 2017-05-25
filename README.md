@@ -1,5 +1,11 @@
 # Labrador LDPC Library
 
+**This is the older and deprecated C version of the Labrador-LDPC library,
+which is now written in Rust and available
+[here](https://github.com/adamgreig/labrador-ldpc). This version is kept around
+for posterity, and because the C version is somewhat easier to interoperate.
+It's still feature complete, has no known bugs, and you're welcome to use it.**
+
 This library handles [LDPC][1] encoding and decoding. It is designed to be 
 usable on embedded platforms as well as in phone, desktop, or server 
 applications. It can be used completely outside of Labrador if you like, as it 
